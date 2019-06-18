@@ -24,14 +24,25 @@ public class ExcelFactory {
     private final String SHEET_ENTERPRISE = "商家与人员对应关系明细";
     private final String SHEET_PEOPLE_SAMPLE = "人员样本数量";
     private final String SHEET_EXCEPT_SAMPLE = "已调研明细";
-    //商家Sheet页数据起始行
+    /**
+     * 商家Sheet页数据起始行
+     */
     private final int LINE_START_ENTERPRISE = 3;
-    //人员Sheet页数据起始行
+    /**
+     * 人员Sheet页数据起始行
+     **/
     private final int LINE_START_PEOPLE_AMPLE = 1;
-    //已用Sheet页数据起始行
+    /**
+     * 已用Sheet页数据起始行
+     */
     private final int LINE_START_EXCEPT_AMPLE = 3;
-
+    /**
+     * 文件后缀名
+     */
     private static final String FILE_SUFFIX = ".xlsx";
+    /**
+     * 被替换的文件名后半部分（假如文件名为abc.xlsx，那处理后的文件名为abc-result.xlsx）
+     */
     private static final String RESULT_FILE_SUFFIX = "-result.xlsx";
     private CellStyle normalCellStyle;
     private CellStyle titleCellStyle;
@@ -40,20 +51,37 @@ public class ExcelFactory {
     private FileInputStream inputStream;
     private Workbook workbook;
     private Set<String> exceptSampleSet;
-    //如果cis对应了多条数据，则保存在这里面
+    /**
+     * 如果cis对应了多条数据，则保存在这里面
+     */
     private Map<String, ArrayList<Enterprise>> duplicateEnterpriseMap;
     private Map<String, Enterprise> enterpriseMap;
     private Map<String, People> peopleMap;
 
-    //用于存放结果的
+    /**
+     * 存放人员的结果
+     */
     private Map<String, Integer> rPeopleSampleMap = new HashMap<>();
+    /**
+     * 存放商家的结果
+     */
     private Map<String, HashSet<String>> rEnterprisePeopleMap = new HashMap<>();
-    private Map<String,Integer> rPeopleSuccess=new HashMap<>();
-    //用于存放过程中的
+    /**
+     * 存放已调研的人员数量
+     */
+    private Map<String, Integer> rPeopleSuccess = new HashMap<>();
+    /**
+     * 用于存放过人员的过程数据
+     */
     private Map<String, Integer> pPeopleSampleMap = new HashMap<>();
+    /**
+     * 存放商家的过程数据
+     */
     private Map<String, HashSet<String>> pEnterprisePeopleMap = new HashMap<>();
 
-    //商家表中存在，但是并不在人员表中的产品/客户经理
+    /**
+     * 商家表中存在，但是并不在人员表中
+     */
     private Set<String> noExistsaler;
 
     public static void main(String[] args) throws Exception {
@@ -61,37 +89,36 @@ public class ExcelFactory {
             System.out.println("输入有误");
         } else {
 //            String filePath = args[0];
-            String filePath = "E:\\满意度.xlsx";
+            String filePath = "E:\\aaa.xlsx";
             ExcelFactory factory = new ExcelFactory(filePath);
 
             try {
-                System.out.println("正在处理文件："+filePath);
+                System.out.println("正在处理文件：" + filePath);
                 factory.doBusiness();
-                System.out.println("处理成功，输出文件是："+filePath.replace(FILE_SUFFIX, RESULT_FILE_SUFFIX));
+                System.out.println("***************处理成功***************");
             } catch (Exception e) {
                 System.out.println(e.toString());
             }
 
         }
-
     }
 
     public ExcelFactory(String filePath) throws Exception {
         this.filePath = filePath;
         inputStream = new FileInputStream(new File(filePath));
         workbook = StreamingReader.builder()
-                .rowCacheSize(100)    // number of rows to keep in memory (defaults to 10)
-                .bufferSize(4096)     // buffer size to use when reading InputStream to file (defaults to 1024)
-                .open(inputStream);            // InputStream or File for XLSX file (required)
+                .rowCacheSize(100)
+                .bufferSize(4096)
+                .open(inputStream);
         enterpriseMap = new HashMap<>();
         duplicateEnterpriseMap = new HashMap<>();
         peopleMap = new HashMap<>();
         noExistsaler = new HashSet<>();
-        exceptSampleSet=new HashSet<>();
+        exceptSampleSet = new HashSet<>();
     }
 
     /**
-     * 从EXCEL文件中读取商家初始数据
+     * 从商家sheet页中读取商家初始数据
      */
     private void readInitEnterpriseInfo() {
         Sheet sheet = workbook.getSheet(SHEET_ENTERPRISE);
@@ -103,13 +130,13 @@ public class ExcelFactory {
             if (i++ < LINE_START_ENTERPRISE) {
                 continue;
             }
-            String cis=getValue(row.getCell(3));
+            String cis = getValue(row.getCell(3));
             //忽略已抽样的cis店家
-            if(""==cis||exceptSampleSet.contains(cis)){
+            if ("" == cis || exceptSampleSet.contains(cis)) {
                 continue;
             }
-            Map<String, People> inspector = new HashMap<>();
-            Map<String, People> saler = new HashMap<>();
+            Map<String, People> inspector = new HashMap<>(6);
+            Map<String, People> saler = new HashMap<>(6);
             inspector.put(Goods.HXDS.name(), new People(getValue(row.getCell(16)), getValue(row.getCell(17))));
             inspector.put(Goods.HXKT.name(), new People(getValue(row.getCell(18)), getValue(row.getCell(19))));
             inspector.put(Goods.KLKT.name(), new People(getValue(row.getCell(20)), getValue(row.getCell(21))));
@@ -132,20 +159,13 @@ public class ExcelFactory {
                 }
             }
             Enterprise enterprise = new Enterprise(getValue(row.getCell(0)),
-                    getValue(row.getCell(1)),
-                    getValue(row.getCell(2)),
-                    getValue(row.getCell(3)),
-                    getValue(row.getCell(4)),
-                    getValue(row.getCell(5)),
-                    getValue(row.getCell(6)),
-                    getValue(row.getCell(7)),
-                    getValue(row.getCell(8)),
-                    getValue(row.getCell(9)),
-                    getValue(row.getCell(10)),
-                    getValue(row.getCell(11)),
-                    getValue(row.getCell(12)),
-                    getValue(row.getCell(13)),
-                    getValue(row.getCell(14)),
+                    getValue(row.getCell(1)), getValue(row.getCell(2)),
+                    getValue(row.getCell(3)), getValue(row.getCell(4)),
+                    getValue(row.getCell(5)), getValue(row.getCell(6)),
+                    getValue(row.getCell(7)), getValue(row.getCell(8)),
+                    getValue(row.getCell(9)), getValue(row.getCell(10)),
+                    getValue(row.getCell(11)), getValue(row.getCell(12)),
+                    getValue(row.getCell(13)), getValue(row.getCell(14)),
                     getValue(row.getCell(15)), inspector, saler);
             //往商家过程Map里添加商家-人员信息
             if (pEnterprisePeopleMap.containsKey(enterprise.getCisCode())) {
@@ -181,22 +201,26 @@ public class ExcelFactory {
      * 从EXCEL中读取人员初始化信息
      */
     private void readInitPeopleInfo() {
-        Sheet sheet = workbook.getSheet(SHEET_PEOPLE_SAMPLE);
-        //遍历所有的行
-        int i = 0;
-        for (Row row : sheet) {
-            //数据从第1行开始（0代表第一行）
-            if (i++ < LINE_START_PEOPLE_AMPLE) {
-                continue;
+        try {
+            Sheet sheet = workbook.getSheet(SHEET_PEOPLE_SAMPLE);
+            //遍历所有的行
+            int i = 0;
+            for (Row row : sheet) {
+                //数据从第1行开始（0代表第一行）
+                if (i++ < LINE_START_PEOPLE_AMPLE) {
+                    continue;
+                }
+                People people = new People(getValue(row.getCell(0)), getValue(row.getCell(2)), getValue(row.getCell(1)),
+                        getValue(row.getCell(3)), getValue(row.getCell(4)), Integer.parseInt(getValue(row.getCell(5))), Integer.parseInt(getValue(row.getCell(6))));
+                peopleMap.put(people.getPCode(), people);
+                if (people.getNeedSample() > 0) {
+                    pPeopleSampleMap.put(people.getPCode(), people.getNeedSample());
+                }
             }
-            People people = new People(getValue(row.getCell(0)), getValue(row.getCell(2)), getValue(row.getCell(1)),
-                    getValue(row.getCell(3)), getValue(row.getCell(4)), Integer.parseInt(getValue(row.getCell(5))), Integer.parseInt(getValue(row.getCell(6))));
-            peopleMap.put(people.getPCode(), people);
-            if (people.getNeedSample() > 0) {
-                pPeopleSampleMap.put(people.getPCode(), people.getNeedSample());
-            }
+            rPeopleSampleMap.putAll(pPeopleSampleMap);
+        } catch (Exception e) {
+            System.out.println("readInitPeopleInfo-" + e.toString());
         }
-        rPeopleSampleMap.putAll(pPeopleSampleMap);
     }
 
     /**
@@ -212,48 +236,45 @@ public class ExcelFactory {
         try {
             workbook.close();
             inputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            System.out.println("doBusiness-" + e.toString());
         }
-
         extractSample();
         writeResult();
     }
 
     private void exceptSampledInfo() {
-        for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
-            Sheet sheet=workbook.getSheetAt(i);
-            if(SHEET_EXCEPT_SAMPLE.equals(sheet.getSheetName())){
-                //遍历所有的行
-                int j = 0;
-                for (Row row : sheet) {
-                    //数据从第1行开始（0代表第一行）
-                    if (j++ < LINE_START_EXCEPT_AMPLE) {
-                        continue;
-                    }
-                    String cisStr = getValue(row.getCell(3));
-                    if(cisStr!=""){
-                        exceptSampleSet.add(cisStr);
-                    }
-                    for (int k = 28; k< 39; k = k+ 2) {
-                        String pCodeStr = getValue(row.getCell(k));
-                        if(""!=pCodeStr){
-                            if(pPeopleSampleMap.containsKey(pCodeStr)){
-                                if(rPeopleSuccess.containsKey(pCodeStr)){
-                                    rPeopleSuccess.put(pCodeStr,rPeopleSuccess.get(pCodeStr)+1);
-                                }else{
-                                    rPeopleSuccess.put(pCodeStr,1);
-                                }
-                                Integer old = pPeopleSampleMap.get(pCodeStr);
-                                old=old-3;
-                                if(old<=0){
-                                    pPeopleSampleMap.remove(pCodeStr);
-                                    rPeopleSampleMap.put(pCodeStr,0);
-                                }else{
-                                    pPeopleSampleMap.put(pCodeStr,old);
-                                    rPeopleSampleMap.put(pCodeStr,old);
-                                }
-                            }
+        Sheet sheet = workbook.getSheet(SHEET_EXCEPT_SAMPLE);
+        //遍历所有的行
+        int j = 0;
+        for (Row row : sheet) {
+            //数据从第3行开始（0代表第一行）
+            if (j++ < LINE_START_EXCEPT_AMPLE) {
+                continue;
+            }
+            String cisStr = getValue(row.getCell(3));
+            if (cisStr != "") {
+                exceptSampleSet.add(cisStr);
+            }
+            int peopleColumnStart = 28;
+            int peopleColumnEnd = 39;
+            for (int k = peopleColumnStart; k < peopleColumnEnd; k = k + 2) {
+                String pCodeStr = getValue(row.getCell(k));
+                if ("" != pCodeStr) {
+                    if (pPeopleSampleMap.containsKey(pCodeStr)) {
+                        if (rPeopleSuccess.containsKey(pCodeStr)) {
+                            rPeopleSuccess.put(pCodeStr, rPeopleSuccess.get(pCodeStr) + 1);
+                        } else {
+                            rPeopleSuccess.put(pCodeStr, 1);
+                        }
+                        Integer old = pPeopleSampleMap.get(pCodeStr);
+                        old = old - 3;
+                        if (old <= 0) {
+                            pPeopleSampleMap.remove(pCodeStr);
+                            rPeopleSampleMap.put(pCodeStr, 0);
+                        } else {
+                            pPeopleSampleMap.put(pCodeStr, old);
+                            rPeopleSampleMap.put(pCodeStr, old);
                         }
                     }
                 }
@@ -265,8 +286,6 @@ public class ExcelFactory {
      * 提取样本
      */
     private void extractSample() {
-        //System.out.println(pEnterprisePeopleMap);
-        //System.out.println(pPeopleSampleMap);
         //记录上一次筛选后，人员样本已经足够的人员编号，此次筛选时，先将其删除
         HashSet<String> exceptPeopleSet = new HashSet<>();
         //循环多轮筛选。每次筛选出一个
@@ -317,15 +336,13 @@ public class ExcelFactory {
         while (rPeopleIter.hasNext()) {
             Map.Entry<String, Integer> next = rPeopleIter.next();
             try {
-                if(pPeopleSampleMap.containsKey(next.getKey())){
+                if (pPeopleSampleMap.containsKey(next.getKey())) {
                     next.setValue(next.getValue() - pPeopleSampleMap.get(next.getKey()));
                 }
-            }catch (Exception e){
+            } catch (Exception e) {
                 System.out.println("111");
             }
         }
-        //System.out.println(rEnterprisePeopleMap);
-        //System.out.println(rPeopleSampleMap);
     }
 
     private void writeResult() {
@@ -391,8 +408,8 @@ public class ExcelFactory {
             newRow.getCell(3).setCellValue(p.getSecondPart());
             newRow.getCell(4).setCellValue(p.getPosition());
             newRow.getCell(5).setCellValue(p.getNeedSample());
-            newRow.getCell(6).setCellValue(rPeopleSuccess.getOrDefault(pCode,0));
-            newRow.getCell(7).setCellValue(p.getNeedSample()-rPeopleSuccess.getOrDefault(pCode,0)*3);
+            newRow.getCell(6).setCellValue(rPeopleSuccess.getOrDefault(pCode, 0));
+            newRow.getCell(7).setCellValue(p.getNeedSample() - rPeopleSuccess.getOrDefault(pCode, 0) * 3);
             newRow.getCell(8).setCellValue(rPeopleSampleMap.get(pCode));
         }
     }
@@ -567,7 +584,7 @@ public class ExcelFactory {
                     continue;
                 }
                 newRow.getCell(columnIndex).setCellValue(people.getPCode());
-                newRow.getCell(columnIndex+1).setCellValue(people.getPName());
+                newRow.getCell(columnIndex + 1).setCellValue(people.getPName());
                 columnIndex += 2;
             }
             columnIndex = 28;
@@ -578,15 +595,15 @@ public class ExcelFactory {
                     continue;
                 }
                 if (noExistsaler.contains(people.getPCode())) {
-                    newRow.getCell(columnIndex).setCellValue("【失效】" +people.getPCode());
-                    newRow.getCell(columnIndex+1).setCellValue("【失效】" +people.getPName());
-                }else {
+                    newRow.getCell(columnIndex).setCellValue("【失效】" + people.getPCode());
+                    newRow.getCell(columnIndex + 1).setCellValue("【失效】" + people.getPName());
+                } else {
                     if (rEnterprisePeopleMap.get(cis).contains(people.getPCode())) {
                         newRow.getCell(columnIndex).setCellValue(people.getPCode());
-                        newRow.getCell(columnIndex+1).setCellValue(people.getPName());
+                        newRow.getCell(columnIndex + 1).setCellValue(people.getPName());
                     } else {
-                        newRow.getCell(columnIndex).setCellValue("【无需】" +people.getPCode());
-                        newRow.getCell(columnIndex+1).setCellValue("【无需】" +people.getPName());
+                        newRow.getCell(columnIndex).setCellValue("【无需】" + people.getPCode());
+                        newRow.getCell(columnIndex + 1).setCellValue("【无需】" + people.getPName());
                     }
                 }
                 columnIndex += 2;
@@ -617,7 +634,7 @@ public class ExcelFactory {
      * @return
      */
     private String getValue(Cell xCell) {
-        if(xCell==null){
+        if (xCell == null) {
             return "";
         }
         if (xCell.getCellType() == CellType.BOOLEAN) {
@@ -625,10 +642,10 @@ public class ExcelFactory {
         } else if (xCell.getCellType() == CellType.NUMERIC) {
             return Double.valueOf(xCell.getNumericCellValue()).longValue() + "";
         } else {
-            String temp=xCell.getStringCellValue();
-            if(temp.equals("ERROR:  #N/A")){
+            String temp = xCell.getStringCellValue();
+            if (temp.equals("ERROR:  #N/A")) {
                 return "";
-            }else{
+            } else {
                 return temp;
             }
         }
