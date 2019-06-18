@@ -463,16 +463,13 @@ public class ExcelFactory {
                     rowIndex++;
                     writeOneEnterprise(rowIndex, cis, newRow, e);
                 }
-
             } else {
                 newRow = sheet.createRow(rowIndex);
                 rowIndex++;
                 Enterprise enterprise = enterpriseMap.get(cis);
                 writeOneEnterprise(rowIndex, cis, newRow, enterprise);
-
             }
         }
-
     }
 
     /**
