@@ -89,7 +89,7 @@ public class ExcelFactory {
             System.out.println("输入有误");
         } else {
 //            String filePath = args[0];
-            String filePath = "E:\\aaa.xlsx";
+            String filePath = "E:\\满意度.xlsx";
             ExcelFactory factory = new ExcelFactory(filePath);
 
             try {
@@ -261,20 +261,22 @@ public class ExcelFactory {
             for (int k = peopleColumnStart; k < peopleColumnEnd; k = k + 2) {
                 String pCodeStr = getValue(row.getCell(k));
                 if ("" != pCodeStr) {
-                    if (pPeopleSampleMap.containsKey(pCodeStr)) {
+                    if (rPeopleSampleMap.containsKey(pCodeStr)) {
                         if (rPeopleSuccess.containsKey(pCodeStr)) {
                             rPeopleSuccess.put(pCodeStr, rPeopleSuccess.get(pCodeStr) + 1);
                         } else {
                             rPeopleSuccess.put(pCodeStr, 1);
                         }
-                        Integer old = pPeopleSampleMap.get(pCodeStr);
-                        old = old - 3;
-                        if (old <= 0) {
-                            pPeopleSampleMap.remove(pCodeStr);
-                            rPeopleSampleMap.put(pCodeStr, 0);
-                        } else {
-                            pPeopleSampleMap.put(pCodeStr, old);
-                            rPeopleSampleMap.put(pCodeStr, old);
+                        if(pPeopleSampleMap.containsKey(pCodeStr)){
+                            Integer old = pPeopleSampleMap.get(pCodeStr);
+                            old = old - 3;
+                            if (old <= 0) {
+                                pPeopleSampleMap.remove(pCodeStr);
+                                rPeopleSampleMap.put(pCodeStr, 0);
+                            } else {
+                                pPeopleSampleMap.put(pCodeStr, old);
+                                rPeopleSampleMap.put(pCodeStr, old);
+                            }
                         }
                     }
                 }
@@ -409,7 +411,8 @@ public class ExcelFactory {
             newRow.getCell(4).setCellValue(p.getPosition());
             newRow.getCell(5).setCellValue(p.getNeedSample());
             newRow.getCell(6).setCellValue(rPeopleSuccess.getOrDefault(pCode, 0));
-            newRow.getCell(7).setCellValue(p.getNeedSample() - rPeopleSuccess.getOrDefault(pCode, 0) * 3);
+            int temp=p.getNeedSample() - rPeopleSuccess.getOrDefault(pCode, 0) * 3;
+            newRow.getCell(7).setCellValue((temp<0?0:temp));
             newRow.getCell(8).setCellValue(rPeopleSampleMap.get(pCode));
         }
     }
