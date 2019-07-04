@@ -71,13 +71,21 @@ public class ExcelFactory {
      */
     private Map<String, Integer> rPeopleSuccess = new HashMap<>();
     /**
-     * 用于存放过人员的过程数据
+     * 存放过程人员的过程数据
      */
     private Map<String, Integer> pPeopleSampleMap = new HashMap<>();
     /**
      * 存放商家的过程数据
      */
     private Map<String, HashSet<String>> pEnterprisePeopleMap = new HashMap<>();
+
+    /**
+     * 记录已调研的cis对应的人群
+     */
+    private Map<String, HashSet<String>> oEnterprisePeopleMap = new HashMap<>();
+
+    private Map<String,Map<String,Integer>> enterprisePeopleNumMap=new HashMap<>();
+
 
     /**
      * 商家表中存在，但是并不在人员表中
@@ -253,33 +261,48 @@ public class ExcelFactory {
                 continue;
             }
             String cisStr = getValue(row.getCell(3));
-            if (cisStr != "") {
-                exceptSampleSet.add(cisStr);
-            }
-            int peopleColumnStart = 28;
-            int peopleColumnEnd = 39;
-            for (int k = peopleColumnStart; k < peopleColumnEnd; k = k + 2) {
-                String pCodeStr = getValue(row.getCell(k));
-                if ("" != pCodeStr) {
-                    if (rPeopleSampleMap.containsKey(pCodeStr)) {
-                        if (rPeopleSuccess.containsKey(pCodeStr)) {
-                            rPeopleSuccess.put(pCodeStr, rPeopleSuccess.get(pCodeStr) + 1);
-                        } else {
-                            rPeopleSuccess.put(pCodeStr, 1);
-                        }
-                        if(pPeopleSampleMap.containsKey(pCodeStr)){
-                            Integer old = pPeopleSampleMap.get(pCodeStr);
-                            old = old - 3;
-                            if (old <= 0) {
-                                pPeopleSampleMap.remove(pCodeStr);
-                                rPeopleSampleMap.put(pCodeStr, 0);
+            if(!cisStr.isEmpty()){
+                int peopleColumnStart = 28;
+                int peopleColumnEnd = 39;
+                for (int k = peopleColumnStart; k < peopleColumnEnd; k = k + 2) {
+                    String pCodeStr = getValue(row.getCell(k));
+                    if ("" != pCodeStr) {
+                        if (rPeopleSampleMap.containsKey(pCodeStr)) {
+                            //oEnterprisePeopleMap用于记录cis对应的人群。一个cis对应的某个人，只需要计算一次
+                            if(oEnterprisePeopleMap.containsKey(cisStr)){
+                                HashSet<String> peoples = oEnterprisePeopleMap.get(cisStr);
+                                if(peoples.contains(pCodeStr)){
+                                    continue;
+                                }else{
+                                    peoples.add(pCodeStr);
+                                    oEnterprisePeopleMap.put(cisStr,peoples);
+                                }
+                            }else{
+                                HashSet<String> peoples=new HashSet<>(10);
+                                peoples.add(pCodeStr);
+                                oEnterprisePeopleMap.put(cisStr,peoples);
+                            }
+
+                            if (rPeopleSuccess.containsKey(pCodeStr)) {
+                                rPeopleSuccess.put(pCodeStr, rPeopleSuccess.get(pCodeStr) + 1);
                             } else {
-                                pPeopleSampleMap.put(pCodeStr, old);
-                                rPeopleSampleMap.put(pCodeStr, old);
+                                rPeopleSuccess.put(pCodeStr, 1);
+                            }
+                            if(pPeopleSampleMap.containsKey(pCodeStr)){
+                                Integer old = pPeopleSampleMap.get(pCodeStr);
+                                old = old - 3;
+                                if (old <= 0) {
+                                    pPeopleSampleMap.remove(pCodeStr);
+                                    rPeopleSampleMap.put(pCodeStr, 0);
+                                } else {
+                                    pPeopleSampleMap.put(pCodeStr, old);
+                                    rPeopleSampleMap.put(pCodeStr, old);
+                                }
                             }
                         }
                     }
                 }
+                exceptSampleSet.add(cisStr);
             }
         }
     }
